@@ -1,0 +1,115 @@
+//codificacion en php con framwork codeigniter
+
+//leer archivo de desde la vista
+<center><H1>SUBIR PLANDE DE CUENTAS</H1></center>
+	<br><br>
+	<form action='<?php echo site_url()."/ctb_catalogo_cuenta/subir_plan_cuentas"?>' method='post' enctype="multipart/form-data">
+		BUSCAR EL ARCHIVO:<input id='txt_buscar' name='userfile' type=file>
+		<br>
+		<center><input type='submit' id='btn_buscar' name='btn_buscar' value='subir el plan de cuentas'/></center>
+	</form>
+	
+	
+//tomar los datos desde el controlador y pasarlos a la funcion del modelo
+/*
+    * guardar_archivo
+    *Permite mediante un archivo csv subir un plande cuentas a la base de datos en las respectivas tablas dependiendo de
+    * si son "T" iran a la tabla ce de centro de cuentas y si son "M" a la tabla de detalle de cuentas de centro 
+    *
+    * @access==>public
+    * @parametros==>no tiene
+    * @return==>no tiene retorno
+    */
+    function guardar_archivo($nombre_archivo, $nombre_caja)
+    {
+		$config['upload_path'] = dirname("/var/www/html/erp_supralive/uploads/".$_POST['userfile']);
+		$config['allowed_types'] = 'csv';
+		$config['file_name']= $nombre_archivo;
+		$config['overwrite']= true;
+		$this->load->library('upload', $config);
+		$this->upload->initialize($config);
+		$this->upload->do_upload();
+	}
+
+
+
+//procesar los datos en la funcion del modelo
+/*
+    * subir_plan_cuentas
+    *Permite mediante un archivo csv subir un plande cuentas a la base de datos en las respectivas tablas dependiendo de
+    * si son "T" iran a la tabla ce de centro de cuentas y si son "M" a la tabla de detalle de cuentas de centro 
+    *
+    * @access==>public
+    * @parametros==>no tiene
+    * @return==>no tiene retorno
+    */
+    function subir_plan_cuentas($ruta)
+    {
+		$cuentas=array();
+		$respuesta="";
+		$fila=0;
+		$sql_borra_centro="delete from financiero_act.pcentro";
+		$sql_borra_elemento="delete from financiero_act.pcntele";
+		//si exixten datos en la tablas los elimina
+		$this->db->trans_begin();
+		$this->db->query($sql_borra_centro);
+		$this->db->query($sql_borra_elemento);
+		if ($this->db->trans_status() === FALSE)//si existe un problema en la transaccion manda un menasje de error 
+		{ 
+			 $this->db->trans_rollback();
+			 return $respuesta="error al querer eliminar documentos<br><br><br><br>";  
+		} 
+		else//si no existe un problema en la transaccion manda un menasje de confirmacion
+		{
+			$this->db->trans_commit();
+			$respuesta.="se eliminaron datos en las tablas<br><br><br><br>";
+		}
+		if (($gestor = fopen($ruta, "r")) !== FALSE)//se abre el docuemtno csv 
+		{
+			while (($datos = fgetcsv($gestor, 1000, ",")) !== FALSE)//recore todas las lineas del archivo
+			{
+				$numero = count($datos);// cuenta cuentas columnas tienes las lineas del csv
+				for ($c=0; $c < $numero; $c++) //recorre las columnas de la fila y dependiendo del contador coloca el datos en un casillero correspondiente
+				{
+					if($c==0){$cuenta['centro'][$fila]=$datos[$c];}
+					if($c==1){$cuenta['n_centro'][$fila]=$datos[$c];}
+					if($c==2){$cuenta['tipo'][$fila]=$datos[$c];}
+				}
+				$fila++;
+			}
+			fclose($gestor);
+		}
+		for($i=0; $i<count($cuenta['centro']); $i++)
+		{
+			//extrayendo el primer caracter del arreglo en la parte de los centros para ver el tipo de cuenta que son
+			if($cuenta['centro'][$i][0]==1){$tipo='A';}
+			if($cuenta['centro'][$i][0]==2){$tipo='P';}
+			if($cuenta['centro'][$i][0]==3){$tipo='T';}
+			if($cuenta['centro'][$i][0]==4){$tipo='I';}
+			if($cuenta['centro'][$i][0]==5){$tipo='G';}
+			if($cuenta['centro'][$i][0]==6){$tipo='C';}
+			if($cuenta['centro'][$i][0]==7){$tipo='7';}
+			if($cuenta['centro'][$i][0]==8){$tipo='8';}
+			if($cuenta['tipo'][$i]=='T')//si el tipo es T insertara los datos en  la tabla de los centros de las cuentas
+			{
+				$sql_centro="insert into financiero_act.pcentro values('1', '".$cuenta['centro'][$i]."','".$cuenta['n_centro'][$i]."', '".$tipo."');";
+				$resultado=$this->db->query($sql_centro);
+				if($this->db->affected_rows()>=1)
+				{
+					$respuesta.=$cuenta['centro'][$i]." ".$cuenta['n_centro'][$i]." ".$tipo;
+				}
+			}
+			else//si el tipo es M insertara los datos en la tabla de los detalles de los centros de las cuentas
+			{
+				$centro=substr($cuenta['centro'][$i], 0, -2);//extrayendo la cuenta de control a la que pertenecen
+				$elemento=substr($cuenta['centro'][$i], -2);//extrayendo el numero que elemento de la cuenta
+				$sql_ele="insert into financiero_act.pcntele values('1', '".$centro."', '".$elemento."', '".$cuenta['centro'][$i]."', 1, '".$cuenta['n_centro'][$i]."', NULL)";
+				$resultado=$this->db->query($sql_ele);
+				if($this->db->affected_rows()>=1)
+				{
+					$respuesta.=$cuenta['centro'][$i]." ".$cuenta['n_centro'][$i]." ".$tipo."<br><br>";
+				}
+			}
+		}
+		return $respuesta;
+	}
