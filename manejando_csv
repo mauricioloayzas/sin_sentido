@@ -11,7 +11,23 @@
 	
 	
 //tomar los datos desde el controlador y pasarlos a la funcion del modelo
-/*
+/*/*
+    * subir_plan_cuentas
+    *Permite mediante un archivo csv subir un plande cuentas a la base de datos en las respectivas tablas dependiendo de
+    * si son "T" iran a la tabla ce de centro de cuentas y si son "M" a la tabla de detalle de cuentas de centro 
+    *
+    * @access==>public
+    * @parametros==>no tiene
+    * @return==>no tiene retorno
+    */
+    function subir_plan_cuentas()
+    {
+		$nombre_archivo=$_POST['txt_nombre'];
+		$this->guardar_archivo($nombre_archivo, 'userfile');
+	}
+	
+	
+	/*
     * guardar_archivo
     *Permite mediante un archivo csv subir un plande cuentas a la base de datos en las respectivas tablas dependiendo de
     * si son "T" iran a la tabla ce de centro de cuentas y si son "M" a la tabla de detalle de cuentas de centro 
@@ -22,13 +38,16 @@
     */
     function guardar_archivo($nombre_archivo, $nombre_caja)
     {
-		$config['upload_path'] = dirname("/var/www/html/erp_supralive/uploads/".$_POST['userfile']);
+		$config['upload_path'] = dirname("/var/www/html/erp_supralive/uploads/");
 		$config['allowed_types'] = 'csv';
 		$config['file_name']= $nombre_archivo;
 		$config['overwrite']= true;
 		$this->load->library('upload', $config);
 		$this->upload->initialize($config);
 		$this->upload->do_upload();
+		$archivo=str_replace(" ", "_", $config['file_name']);
+		$respuesta=$this->ctb_procesos_model->subir_plan_cuentas($archivo);//realiza los procesos de subida a la base de datos
+		echo $respuesta;
 	}
 
 
