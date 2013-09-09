@@ -1,13 +1,22 @@
 //codificacion en php con framwork codeigniter
 
 //leer archivo de desde la vista
-<center><H1>SUBIR PLANDE DE CUENTAS</H1></center>
+<? if ($codigo=="S"):?>
+	<script language="JavaScript"> 
+	   function copia(valor)
+	   { 
+			document.frm.txt_nombre.value = valor; 
+	   } 
+	</script>
+	<center><H1>SUBIR PLANDE DE CUENTAS</H1></center>
 	<br><br>
-	<form action='<?php echo site_url()."/ctb_catalogo_cuenta/subir_plan_cuentas"?>' method='post' enctype="multipart/form-data">
-		BUSCAR EL ARCHIVO:<input id='txt_buscar' name='userfile' type=file>
+	<form action='<?php echo site_url()."/ctb_catalogo_cuenta/subir_plan_cuentas"?>' method='post' enctype="multipart/form-data" id='frm' name='frm'>
+		BUSCAR EL ARCHIVO:<input id='txt_buscar' name='userfile' type=file onchange="copia(this.value)">
+		<input type='hidden' name='txt_nombre' id='txt_nombre'/>
 		<br>
 		<center><input type='submit' id='btn_buscar' name='btn_buscar' value='subir el plan de cuentas'/></center>
 	</form>
+<? endif;?>
 	
 	
 //tomar los datos desde el controlador y pasarlos a la funcion del modelo
