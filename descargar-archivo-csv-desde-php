@@ -1,0 +1,75 @@
+//rutina desarrollada en php con el framwork codegniter
+
+
+
+//parte de la vista
+<script language="JavaScript"> 
+	   //funcion que invoca los procesos para descargar el ejemplo csv
+	   function descargar()
+	   {
+		   sUrl= "<?php echo site_url().'/ctb_catalogo_cuenta/descargar_ejemplo_plan_cuentas'; ?>";//direciono a la funcion que reliza esos proceeos en php
+		   frm.action = sUrl;//doy el action al formulario
+		   frm.target = "_blank";//digo que la pagian sera en blanca
+		   frm.submit();//invoco al action
+	   }
+</script>
+<form action='<?php echo site_url()."/ctb_catalogo_cuenta/subir_plan_cuentas"?>' method='post' enctype="multipart/form-data" id='frm' name='frm'>
+		DESCARGAR EL ARCHIVO DE EJEMPLO:<input type='button' id='btn_descargar' name='btn_descargar' value='descargar' onclick='descargar();'/>
+		<br><br><br>
+		<center><input type='submit' id='btn_buscar' name='btn_buscar' value='subir el plan de cuentas'/></center>
+</form>
+
+
+
+//parte del modelo
+/*
+    *descargar_ejemplo_plan_cuentas
+    *Permite bajar el ejemplo del csv del plan de cuentas
+    *
+    * @access==>public
+    * @parametros==>no tiene
+    * @return==>no tiene retorno
+    */
+    function descargar_ejemplo_plan_cuentas($ruta)
+    {
+		$respuesta="";
+		if (($gestor = fopen($ruta, "r")) !== FALSE)//se abre el docuemtno csv 
+		{
+			while (($datos = fgetcsv($gestor, 1000, ",")) !== FALSE)//recore todas las lineas del archivo
+			{
+				$numero = count($datos);// cuenta cuentas columnas tienes las lineas del csv
+				for ($c=0; $c < $numero; $c++) //recorre las columnas de la fila y dependiendo del contador coloca el datos en un casillero correspondiente
+				{
+					if($c==0){$cuenta['numero'][$fila]=$datos[$c];}//primera columna
+					if($c==1){$cuenta['cuenta'][$fila]=$datos[$c];}//segunda columna
+					if($c==2){$cuenta['identificador'][$fila]=$datos[$c];}//tercera columna
+				}
+				$respuesta.=$cuenta['numero'][$fila].",".$cuenta['cuenta'][$fila].",".$cuenta['identificador'][$fila]."\n";// voy crwando una  cadena con las filas para al final retornarla
+				$fila++;
+			}
+			fclose($gestor);
+		}
+		return $respuesta;
+	}
+	
+	
+//parte del controlador
+/*
+    *descargar_ejemplo_plan_cuentas
+    *Permite bajar el ejemplo del csv del plan de cuentas
+    *
+    * @access==>public
+    * @parametros==>no tiene
+    * @return==>no tiene retorno
+    */
+    function descargar_ejemplo_plan_cuentas()
+    {
+		$ruta_archivo="formato.csv";//nombre del archivo
+		header("Cache-Control: public"); 
+		header('Content-Type: text/csv; charset=utf-8');//tipo de archivo que se descargara
+		header('Content-Disposition: attachment; filename=formato_plan_cuentas.csv');//nombre con que se va a descargar el archivo en la computadora del usuario
+		header("Pragma: no-cache");
+		header("Expires: 0");
+		$respuesta=$this->ctb_procesos_model->descargar_ejemplo_plan_cuentas($ruta_archivo);//llamada de la funcion del modelo que maneja el archivo
+		echo $respuesta;//con esta linea colocamos los datos en el csv
+	}
