@@ -139,5 +139,6 @@
 				}
 			}
 		}
+		unlink($ruta);//elimina el archivo al final de realizar todos los porcesos
 		return $respuesta;
 	}
